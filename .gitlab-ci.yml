@@ -1,0 +1,52 @@
+stages:
+  - validate
+  - apply
+
+TF-Validate:
+  stage: validate
+  tags: 
+    - example-runner
+  image: ubuntu:focal
+  only:
+    - master
+  before_script:
+    - sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+    - sudo apt-get update && sudo apt-get install terraform -y
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    - unzip awscliv2.zip
+    - sudo ./aws/install
+    - aws configure set region us-east-1
+    - aws configure set aws_access_key_id AKIAJX7X7X7X7X7X7X7X
+    - aws configure set aws_secret_access_key dsfgfdghfd564sfd56s4df6df
+  script:
+    - terraform init
+    - terraform validate
+    - terraform plan -var-file="./configs/dev.tfvars"
+  environment:
+    name: 'TF-Validate'
+
+TF-Apply:
+  stage: apply
+  when: manual
+  only:
+    - master
+  tags:
+    - example-runner
+  image: ubuntu:focal
+  dependencies:
+    - TF-Validate
+  before_script:
+  - sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+  - sudo apt-get update && sudo apt-get install terraform -y
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  - unzip awscliv2.zip
+  - sudo ./aws/install
+  - aws configure set region us-east-1
+  - aws configure set aws_access_key_id AKIAJX7X7X7X7X7X7X7X
+  - aws configure set aws_secret_access_key dsfgfdghfd564sfd56s4df6df 
+  script:
+    - terraform init
+    - terraform apply -var-file="./configs/dev.tfvars" -auto-approve
+  environment:
+    name: 'TF-Apply'
+
